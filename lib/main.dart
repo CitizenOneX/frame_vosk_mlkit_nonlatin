@@ -66,6 +66,9 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
     final modelPath = await ModelLoader().loadFromAssets('assets/$_modelName');
     _model = await _vosk.createModel(modelPath);
     _recognizer = await _vosk.createRecognizer(model: _model, sampleRate: _sampleRate);
+    // TODO don't ask for 1 alternative, because instead of a "text" block in the json you get "alternatives"
+    //await _recognizer.setMaxAlternatives(1);
+    await _recognizer.setPartialWords(partialWords: false);
 
     currentState = ApplicationState.disconnected;
     if (mounted) setState(() {});
@@ -144,16 +147,20 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
         // recognizer blocks until it has something
         final resultReady = await _recognizer.acceptWaveformBytes(Uint8List.fromList(audioSample));
 
-        // TODO consider enabling "alternatives"?
-        _text = resultReady ?
-            jsonDecode(await _recognizer.getResult())['text']
-          : jsonDecode(await _recognizer.getPartialResult())['partial'];
+        // ignore partials, if any come through (even though we don't ask for them)
+        if (!resultReady) {
+          continue;
+        }
+
+        // Disabled alternatives and partial words for now - partials jump around a lot
+        var json = await _recognizer.getResult();
+        _text = jsonDecode(json)['text'];
 
         // If the text is the same as the previous one, we don't send it to Frame and force a redraw
         // The recognizer often produces a bunch of empty string in a row too, so this means
         // we send the first one (clears the display) but not subsequent ones
-        // Often the final result matches the last partial, so if it's a final result then show it
-        // on the phone but don't send it
+        // If we ask for partials, then often the final result matches the last partial,
+        // so if it's a final result then show it on the phone but don't send it
         if (_text == prevText) {
           continue;
         }
@@ -173,11 +180,14 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
           continue;
         }
         else {
-          _translatedText = await _translator.translateText(_text);
+          _translatedText = (await _translator.translateText(_text)).trim();
+          _log.fine(() => 'Translated text: "$_text" => "$_translatedText"');
         }
 
-        if (_log.isLoggable(Level.FINE)) {
-          _log.fine('Recognized text: $_text');
+        // some utterances (e.g. just a 'de' in Chinese) might translate into nothing, an empty string
+        // which we can't pass in to TextSpriteBlock, so skip these
+        if (_translatedText.isEmpty) {
+          continue;
         }
 
         // send the last N rows of the current text to Frame
@@ -194,6 +204,8 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
         // TODO selectively rasterize lines and send them instead? ComputeMetrics gives us all the lines
         // but we can't necessarily know how many of the last N rows have changed (1? 2?) in the last update
         // so for now send them all
+        // update: but by not sending partials, maybe there's no benefit in checking if we've rasterized/sent
+        // these ones before, because they'll be from different utterances
         await tsb.rasterize();
 
         // send the header and the lines over to Frame for display
