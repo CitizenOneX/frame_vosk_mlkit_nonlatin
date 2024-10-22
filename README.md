@@ -4,7 +4,7 @@ Connects to Frame, streams audio from the Host (phone) microphone, which is sent
 
 Drop in an alternative [Vosk model](https://alphacephei.com/vosk/models) to perform speech-to-text in a language other than Chinese (`vosk-model-small-cn-0.22` included). The model name appears in `main.dart` and `pubspec.yaml`.
 
-Specify an alternative `targetLanguage` in [lib/main.dart](lib/main.dart) to translate to an [ML Kit supported language](https://developers.google.com/ml-kit/language/translation/translation-language-support) other than English.
+Specify an alternative `targetLanguage` in [lib/main.dart](lib/main.dart) to translate to an [ML Kit supported language](https://developers.google.com/ml-kit/language/translation/translation-language-support) other than Russian.
 
 This app uses TextSpriteBlock to send text as images to Frame, so non-Latin script is supported.
 
