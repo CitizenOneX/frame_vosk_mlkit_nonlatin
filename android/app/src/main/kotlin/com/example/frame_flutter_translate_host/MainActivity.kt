@@ -1,4 +1,4 @@
-package com.example.frame_flutter_translate_host
+package com.example.frame_vosk_mlkit_nonlatin
 
 import io.flutter.embedding.android.FlutterActivity
 

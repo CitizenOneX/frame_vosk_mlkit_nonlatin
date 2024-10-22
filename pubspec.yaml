@@ -1,5 +1,5 @@
-name: frame_flutter_translate_host
-description: "Connects to Frame and streams audio from its microphone, which is sent through a local (on Host device) vosk speech-to-text engine, translates the text into a target language on-device, and displays the translated text on the Frame display."
+name: frame_vosk_mlkit_nonlatin
+description: "Connects to Frame and streams audio from the phone's microphone, which is sent through a local (on Host device) vosk speech-to-text engine, translates the text into a target language on-device using ML Kit, and displays the translated text on the Frame display using TextSpriteBlock."
 publish_to: 'none'
 version: 0.1.0
 
