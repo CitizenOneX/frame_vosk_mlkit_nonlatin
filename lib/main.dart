@@ -8,8 +8,7 @@ import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:logging/logging.dart';
 import 'package:record/record.dart';
 import 'package:simple_frame_app/simple_frame_app.dart';
-import 'package:simple_frame_app/text_utils.dart';
-import 'package:simple_frame_app/tx/plain_text.dart';
+import 'package:simple_frame_app/tx/text_sprite_block.dart';
 import 'package:vosk_flutter/vosk_flutter.dart';
 
 void main() => runApp(const MainApp());
@@ -38,14 +37,14 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
   final _vosk = VoskFlutterPlugin.instance();
   late final Model _model;
   late final Recognizer _recognizer;
-  static const _sampleRate = 16000;
+  static const _sampleRate = 16000; // Vosk models on mobile are 16kHz, Frame can for now only stream 16-bit PCM at 8kHz
 
   String _text = "N/A";
   String _translatedText = "N/A";
 
   final _translator = OnDeviceTranslator(
     sourceLanguage: TranslateLanguage.chinese,
-    targetLanguage: TranslateLanguage.english);
+    targetLanguage: TranslateLanguage.russian);
 
   @override
   void initState() {
@@ -87,7 +86,6 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
 
     try {
       // start the audio stream
-      // TODO select suitable sample rate for the Frame given BLE bandwidth constraints if we want to switch to Frame mic
       final recordStream = await audioRecorder.startStream(
         const RecordConfig(encoder: AudioEncoder.pcm16bits,
           numChannels: 1,
@@ -168,7 +166,9 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
           // comes a bit soon and hence the display is cleared a little sooner
           // than they want (not like audio hangs around in the air though
           // after words are spoken!)
-          await frame!.sendMessage(TxPlainText(msgCode: 0x0b, text: ' '));
+          // TODO for now don't clear the display, it will auto-clear after 10 seconds of no updates
+          // TODO if I do decide to clear from here, switch to TxCode(msgCode: 0x10)
+          //await frame!.sendMessage(TxPlainText(msgCode: 0x0b, text: ' '));
           prevText = '';
           continue;
         }
@@ -180,9 +180,28 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
           _log.fine('Recognized text: $_text');
         }
 
-        // send current text to Frame
-        String wrappedText = TextUtils.wrapText(_translatedText, 640, 4);
-        await frame!.sendMessage(TxPlainText(msgCode: 0x0b, text: wrappedText));
+        // send the last N rows of the current text to Frame
+        // TODO if we could be more sure of which rows would have changed since last time we could
+        // send a diff with only the new lines, but for now every time there's new text we send the last N rows of it
+        // which should give a scrolling effect for long text
+        var tsb = TxTextSpriteBlock(
+          msgCode: 0x20,
+          width: 600,
+          fontSize: 24,
+          displayRows: 3,
+          text: _translatedText);
+
+        // TODO selectively rasterize lines and send them instead? ComputeMetrics gives us all the lines
+        // but we can't necessarily know how many of the last N rows have changed (1? 2?) in the last update
+        // so for now send them all
+        await tsb.rasterize();
+
+        // send the header and the lines over to Frame for display
+        await frame!.sendMessage(tsb);
+
+        for (var line in tsb.lines) {
+          await frame!.sendMessage(line);
+        }
 
         // update the phone UI too
         if (mounted) setState(() {});
