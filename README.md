@@ -11,8 +11,6 @@ This app uses TextSpriteBlock to send text as images to Frame, so non-Latin scri
 ### Frameshots, Screenshots
 ![Frameshot1](docs/frameshot1.png)
 
-https://github.com/user-attachments/assets/40f675dd-8f12-42d6-9555-fc4108d0f8a6
-
 ![Screenshot1](docs/screenshot1.png)
 
 ### Architecture
