@@ -29,5 +29,5 @@ flutter:
     - packages/simple_frame_app/lua/data.min.lua
     - packages/simple_frame_app/lua/sprite.min.lua
     - packages/simple_frame_app/lua/text_sprite_block.min.lua
-    - assets/vosk-model-small-cn-0.22.zip
+    - assets/vosk-model-small-ru-0.22.zip
     - assets/frame_app.min.lua
