@@ -459,10 +459,11 @@ packages:
   simple_frame_app:
     dependency: "direct main"
     description:
-      path: "../simple_frame_app"
-      relative: true
-    source: path
-    version: "0.0.9"
+      name: simple_frame_app
+      sha256: "042f9a6834fd1bac9d691bdd7883ee3e191690f17d6eca41150164a0bac9ec98"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   sky_engine:
     dependency: transitive
     description: flutter

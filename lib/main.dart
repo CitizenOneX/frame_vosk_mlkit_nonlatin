@@ -196,9 +196,9 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
         // which should give a scrolling effect for long text
         var tsb = TxTextSpriteBlock(
           msgCode: 0x20,
-          width: 600,
+          width: 620,
           fontSize: 24,
-          displayRows: 3,
+          maxDisplayRows: 10,
           text: _translatedText);
 
         // TODO selectively rasterize lines and send them instead? ComputeMetrics gives us all the lines
@@ -206,13 +206,13 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
         // so for now send them all
         // update: but by not sending partials, maybe there's no benefit in checking if we've rasterized/sent
         // these ones before, because they'll be from different utterances
-        await tsb.rasterize();
+        await tsb.rasterize(startLine: 0, endLine: tsb.numLines - 1);
 
         // send the header and the lines over to Frame for display
         await frame!.sendMessage(tsb);
 
-        for (var line in tsb.lines) {
-          await frame!.sendMessage(line);
+        for (var sprite in tsb.rasterizedSprites) {
+          await frame!.sendMessage(sprite);
         }
 
         // update the phone UI too
